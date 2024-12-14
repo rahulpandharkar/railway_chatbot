@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Railway Assistant - Customer Care</title>
+    <style>
+        /* General Styles */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7fb;
+            margin: 0;
+            padding: 0;
+        }
+
+        h1, h2 {
+            color: #333;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+            margin: 50px auto;
+            background-color: #ffffff;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Chatbox Styles */
+        #chatInput {
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+            border: 2px solid #ccc;
+            border-radius: 8px;
+            outline: none;
+            transition: border-color 0.3s ease;
+        }
+
+        #chatInput:focus {
+            border-color: #4CAF50;
+        }
+
+        .button {
+            padding: 12px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s ease;
+        }
+
+        .button:hover {
+            background-color: #45a049;
+        }
+
+        #response, #imageResponse {
+            margin-top: 30px;
+            padding: 15px;
+            background-color: #f1f1f1;
+            border-radius: 8px;
+            font-size: 16px;
+            line-height: 1.5;
+            color: #555;
+            display: none; /* Initially hidden */
+            word-wrap: break-word; /* Ensure text wraps within the container */
+            overflow-wrap: break-word; /* Ensure text wraps within the container */
+            max-height: 300px; /* Set a max height to avoid overflow */
+            overflow-y: auto; /* Allow scrolling if content overflows */
+        }
+
+        #thinkingAnimation {
+            display: none;
+            font-size: 18px;
+            color: #888;
+            margin-top: 20px;
+        }
+
+        /* Typewriter Effect */
+        .typewriter {
+            display: inline-block;
+            white-space: nowrap;
+            overflow: hidden;
+            border-right: 3px solid #333;
+            padding-right: 5px;
+            animation: typing 3s steps(40) 1s forwards, blinkCaret 0.75s step-end infinite;
+        }
+
+        @keyframes typing {
+            from {
+                width: 0;
+            }
+            to {
+                width: 100%;
+            }
+        }
+
+        @keyframes blinkCaret {
+            50% {
+                border-color: transparent;
+            }
+        }
+
+        /* Image Upload Styles */
+        #imageInput {
+            font-size: 16px;
+            padding: 8px;
+            border-radius: 8px;
+            border: 2px solid #ccc;
+        }
+
+        .upload-section {
+            margin-top: 30px;
+        }
+
+        /* Thinking Animation */
+        .thinking {
+            display: inline-block;
+            font-size: 18px;
+            color: #4CAF50;
+        }
+
+        .thinking span {
+            animation: blink 1.5s infinite;
+        }
+
+        @keyframes blink {
+            50% {
+                opacity: 0;
+            }
+        }
+
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Railway Assistant</h1>
+    <h2>Your Personal Customer Care Helper</h2>
+    
+    <!-- Chatbot Section -->
+    <div>
+        <h3>Ask Railway Assistant:</h3>
+        <textarea id="chatInput" placeholder="Type your message here..."></textarea><br>
+        <button class="button" onclick="sendChat()">Send Message</button>
+
+        <div id="response"></div>
+    </div>
+
+    <!-- Image Upload Section -->
+    <div class="upload-section">
+        <h3>Upload an Image:</h3>
+        <input type="file" id="imageInput" accept="image/*"><br>
+        <button class="button" onclick="uploadImage()">Upload Image</button>
+
+        <div id="thinkingAnimation" class="thinking"><span>Thinking...</span></div>
+        <div id="imageResponse"></div>
+    </div>
+</div>
+
+<script>
+    function sendChat() {
+    const message = document.getElementById('chatInput').value;
+
+    if (message.trim() === '') return;
+
+    document.getElementById('response').style.display = 'none';
+    document.getElementById('response').innerHTML = ''; // Clear previous response
+
+    fetch('/chatbot', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ message: message })
+    })
+    .then(response => response.json())
+    .then(data => {
+        const responseContainer = document.getElementById('response');
+        if (data.response) {
+            responseContainer.style.display = 'block';
+            typewriterEffect(responseContainer, formatResponse(data.response));
+        } else {
+            responseContainer.style.display = 'block';
+            typewriterEffect(responseContainer, `Sorry, an error occurred: ${data.error}`);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        document.getElementById('response').innerHTML = `<div class="typewriter">Oops! Something went wrong. Please try again later.</div>`;
+    });
+}
+
+function uploadImage() {
+    const fileInput = document.getElementById('imageInput');
+    const formData = new FormData();
+    formData.append('image', fileInput.files[0]);
+
+    // Show thinking animation
+    document.getElementById('thinkingAnimation').style.display = 'inline-block';
+    document.getElementById('imageResponse').style.display = 'none';
+
+    fetch('/upload', {
+        method: 'POST',
+        body: formData,
+    })
+    .then(response => response.json())
+    .then(data => {
+        const imageResponseContainer = document.getElementById('imageResponse');
+        if (data.suggestions) {
+            imageResponseContainer.style.display = 'block';
+            typewriterEffect(imageResponseContainer, formatResponse(data.suggestions)); // Use typewriter effect here
+        } else {
+            imageResponseContainer.style.display = 'block';
+            typewriterEffect(imageResponseContainer, 'Sorry, we couldn\'t analyze the image properly. Please try again.'); // Use typewriter effect here
+        }
+
+        // Hide thinking animation
+        document.getElementById('thinkingAnimation').style.display = 'none';
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        document.getElementById('imageResponse').innerHTML = `<div class="typewriter">Oops! Something went wrong. Please try again later.</div>`;
+        document.getElementById('thinkingAnimation').style.display = 'none';
+    });
+}
+
+// Typewriter Effect: Dynamically adds characters to the response
+function typewriterEffect(container, text) {
+    let i = 0;
+    container.innerHTML = ''; // Clear the container
+
+    function type() {
+        if (i < text.length) {
+            container.innerHTML += text.charAt(i);
+            i++;
+            setTimeout(type, 50); // Adjust speed of typing (50ms per character)
+        }
+    }
+
+    type();
+}
+
+function formatResponse(text) {
+    // Add proper punctuation, capitalize sentences, and improve clarity
+    const formattedText = text
+        .replace(/([.!?])\s*(?=[a-z])/g, '$1 ') // Ensure space after punctuation
+        .replace(/([a-z])([A-Z])/g, '$1. $2') // Add period between lowercase and uppercase letters
+        .replace(/\s+/g, ' ') // Collapse multiple spaces
+        .trim();
+
+    // Capitalize first letter of each sentence
+    return formattedText.replace(/(?:^|\.\s*)([a-z])/g, function(match) {
+        return match.toUpperCase();
+    });
+}
+
+function uploadImage() {
+    const fileInput = document.getElementById('imageInput');
+    const formData = new FormData();
+    formData.append('image', fileInput.files[0]);
+
+    // Show thinking animation
+    document.getElementById('thinkingAnimation').style.display = 'inline-block';
+    document.getElementById('imageResponse').style.display = 'none';
+
+    fetch('/upload', {
+        method: 'POST',
+        body: formData,
+    })
+    .then(response => response.json())
+    .then(data => {
+        const imageResponseContainer = document.getElementById('imageResponse');
+        if (data.suggestions) {
+            imageResponseContainer.style.display = 'block';
+            typewriterEffect(imageResponseContainer, formatResponse(data.suggestions)); // Use typewriter effect here
+        } else {
+            imageResponseContainer.style.display = 'block';
+            typewriterEffect(imageResponseContainer, 'Sorry, we couldn\'t analyze the image properly. Please try again.'); // Use typewriter effect here
+        }
+
+        // Hide thinking animation
+        document.getElementById('thinkingAnimation').style.display = 'none';
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        document.getElementById('imageResponse').innerHTML = `<div class="typewriter">Oops! Something went wrong. Please try again later.</div>`;
+        document.getElementById('thinkingAnimation').style.display = 'none';
+    });
+}
+</script>
+
+</body>
+</html>
