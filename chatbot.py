@@ -7,7 +7,7 @@ import logging
 from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS  # Import CORS
 import re
-import string  # Add this line to use string.punctuation
+import string  # Add this line to use string.punctuation. Edited comment here
 
 # Configure API Key
 GOOGLE_API_KEY = 'AIzaSyDhEZbtZkV9EN7H6O91M1AMN0r1UXzu5gE'
