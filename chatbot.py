@@ -25,10 +25,23 @@ def format_response(response, max_words=50):  # Increased max_words to 50
     1. Limit response to max_words.
     2. Remove unwanted characters.
     3. Replace multiple spaces/newlines with a single space.
-    4. Ensure the result is a clean sentence with proper punctuation.
+    4. Ensure the result is a clean sentence with proper punctuation, especially for contractions.
     """
+    # Preserve common contractions
+    contractions = {
+        "I'm": "I'm", "it's": "it's", "you're": "you're", "we're": "we're", "they're": "they're",
+        "I've": "I've", "we've": "we've", "you've": "you've", "they've": "they've",
+        "I'd": "I'd", "you'd": "you'd", "he'd": "he'd", "she'd": "she'd", "we'd": "we'd", "they'd": "they'd",
+        "can't": "can't", "won't": "won't", "didn't": "didn't", "don't": "don't", "doesn't": "doesn't",
+        "isn't": "isn't", "aren't": "aren't", "wasn't": "wasn't", "weren't": "weren't"
+    }
+
+    # Regular expression to fix contractions and common mistakes
+    for contraction in contractions:
+        response = re.sub(r'\b' + contraction + r'\b', contractions[contraction], response)
+
     # Remove unwanted characters, keep only letters/numbers/spaces and basic punctuation
-    cleaned_response = re.sub(r'[^\w\s.,!?]', '', response)
+    cleaned_response = re.sub(r'[^\w\s.,!?\'"-]', '', response)
 
     # Replace multiple spaces/newlines with a single space
     single_line_response = re.sub(r'\s+', ' ', cleaned_response)
@@ -76,7 +89,7 @@ def chat_bot():
         model = genai.GenerativeModel("gemini-1.5-flash")
 
         # Modify user_input to include customer care tone for Indian Railways
-        user_input = f"Act as a professional customer care assistant for Indian Railways and give response in not more than 30 words. {user_input}"
+        user_input = f"Act as a professional customer care assistant for Indian Railways and give response in not more than 30 words and say something like you're telling the so called authority (relevant with department to escalate unless it sounds like a seriuous problem, if it doesn't you can just say contact the on board train person to resolve this) for this statement: {user_input}"
 
         # Generate content based on user input
         result = model.generate_content([user_input])
